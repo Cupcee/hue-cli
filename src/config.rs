@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -29,9 +29,9 @@ pub struct PresetAction {
 
 impl Config {
     fn config_path() -> Result<PathBuf> {
-        let dir = dirs::config_dir()
-            .ok_or_else(|| anyhow!("Could not determine config directory"))?;
-        Ok(dir.join("hue-cli").join("config.json"))
+        let home =
+            dirs::home_dir().ok_or_else(|| anyhow!("Could not determine home directory"))?;
+        Ok(home.join(".config").join("hue-cli").join("config.json"))
     }
 
     pub fn load() -> Result<Self> {

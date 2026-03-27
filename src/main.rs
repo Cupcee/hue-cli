@@ -4,7 +4,7 @@ mod hue;
 
 use std::io::{self, Write as _};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
 
 use config::{Config, Preset, PresetAction};
@@ -180,12 +180,18 @@ fn run() -> Result<()> {
         Commands::On { group } => cmd_on(&group),
         Commands::Off { group } => cmd_off(&group),
         Commands::Preset { command } => match command {
-            PresetCommands::Save { name, group, dim, rgb } => {
-                cmd_preset_save(&name, &group, dim, rgb, false)
-            }
-            PresetCommands::Add { name, group, dim, rgb } => {
-                cmd_preset_save(&name, &group, dim, rgb, true)
-            }
+            PresetCommands::Save {
+                name,
+                group,
+                dim,
+                rgb,
+            } => cmd_preset_save(&name, &group, dim, rgb, false),
+            PresetCommands::Add {
+                name,
+                group,
+                dim,
+                rgb,
+            } => cmd_preset_save(&name, &group, dim, rgb, true),
             PresetCommands::Apply { name } => cmd_preset_apply(&name),
             PresetCommands::List => cmd_preset_list(),
             PresetCommands::Show { name } => cmd_preset_show(&name),
@@ -254,19 +260,17 @@ fn cmd_init(bridge_ip_arg: Option<String>) -> Result<()> {
 fn cmd_groups() -> Result<()> {
     let config = Config::load()?;
     let client = make_client(&config)?;
-    let groups = client.get_groups()?;
+    let mut rooms = client.get_rooms()?;
 
-    if groups.is_empty() {
-        println!("No groups found.");
+    if rooms.is_empty() {
+        println!("No rooms found.");
         return Ok(());
     }
 
-    let mut entries: Vec<_> = groups.iter().collect();
-    entries.sort_by_key(|(id, _)| id.parse::<u32>().unwrap_or(0));
-    println!("{:<6} {:<30} {}", "ID", "Name", "Type");
-    println!("{}", "-".repeat(50));
-    for (id, group) in entries {
-        println!("{:<6} {:<30} {}", id, group.name, group.kind);
+    rooms.sort_by(|a, b| a.name.cmp(&b.name));
+    println!("{}", "-".repeat(30));
+    for room in &rooms {
+        println!("{}", room.name);
     }
     Ok(())
 }
