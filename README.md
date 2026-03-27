@@ -117,4 +117,4 @@ hue preset delete partymode
 
 - Room names are case-insensitive — `"Living Room"` and `"living room"` both work.
 - The tool uses the [Hue API v2](https://developers.meethue.com/develop/hue-api-v2/) over HTTPS. The bridge uses a self-signed certificate, which the tool accepts automatically.
-- Credentials are stored in plain text at `~/.config/hue-cli/config.json`. Anyone with access to that file or your Wi-Fi network can control your lights.
+- Credentials are stored in plain text at `~/.config/hue-cli/config.json`. **Anyone on your Wi-Fi network can control your lights**, and access to that file gives them a ready-made API key to do so.
