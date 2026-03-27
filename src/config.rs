@@ -25,6 +25,8 @@ pub struct PresetAction {
     pub dim: Option<u8>,
     /// RGB values 0–255
     pub rgb: Option<[u8; 3]>,
+    /// Color temperature in mirek (153 = cool/daylight, 500 = warm/candlelight)
+    pub mirek: Option<u16>,
 }
 
 impl Config {

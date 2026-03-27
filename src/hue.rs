@@ -210,6 +210,19 @@ impl HueClient {
         check_v2_response(resp)
     }
 
+    /// mirek: 153 (cool/daylight) – 500 (warm/candlelight)
+    pub fn set_group_color_temp(&self, grouped_light_id: &str, mirek: u16) -> Result<()> {
+        let url = format!("{}/resource/grouped_light/{grouped_light_id}", self.base());
+        let resp = self
+            .put(&url)
+            .json(&json!({
+                "on": {"on": true},
+                "color_temperature": {"mirek": mirek}
+            }))
+            .send()?;
+        check_v2_response(resp)
+    }
+
     pub fn set_group_color(&self, grouped_light_id: &str, r: u8, g: u8, b: u8) -> Result<()> {
         let (x, y) = crate::color::rgb_to_xy(r, g, b);
         let url = format!("{}/resource/grouped_light/{grouped_light_id}", self.base());

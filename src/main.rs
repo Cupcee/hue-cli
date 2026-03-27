@@ -61,6 +61,15 @@ enum Commands {
         b: u8,
     },
 
+    /// Set color temperature for a group (153 = cool/daylight, 500 = warm/candlelight)
+    Warm {
+        /// Group/room name (e.g. "living room")
+        group: String,
+        /// Color temperature in mirek (153–500)
+        #[arg(value_parser = clap::value_parser!(u16).range(153..=500))]
+        mirek: u16,
+    },
+
     /// Turn a group on
     On {
         /// Group/room name
@@ -95,6 +104,9 @@ enum PresetCommands {
         /// RGB color as r,g,b  (e.g. 255,128,0)
         #[arg(long, value_name = "R,G,B")]
         rgb: Option<Rgb>,
+        /// Color temperature in mirek (153 = cool/daylight, 500 = warm/candlelight)
+        #[arg(long, value_parser = clap::value_parser!(u16).range(153..=500))]
+        mirek: Option<u16>,
     },
 
     /// Add another group action to an existing preset
@@ -110,6 +122,9 @@ enum PresetCommands {
         /// RGB color as r,g,b  (e.g. 255,128,0)
         #[arg(long, value_name = "R,G,B")]
         rgb: Option<Rgb>,
+        /// Color temperature in mirek (153 = cool/daylight, 500 = warm/candlelight)
+        #[arg(long, value_parser = clap::value_parser!(u16).range(153..=500))]
+        mirek: Option<u16>,
     },
 
     /// Apply a saved preset
@@ -177,6 +192,7 @@ fn run() -> Result<()> {
         Commands::Groups => cmd_groups(),
         Commands::Dim { group, level } => cmd_dim(&group, level),
         Commands::Rgb { group, r, g, b } => cmd_rgb(&group, r, g, b),
+        Commands::Warm { group, mirek } => cmd_warm(&group, mirek),
         Commands::On { group } => cmd_on(&group),
         Commands::Off { group } => cmd_off(&group),
         Commands::Preset { command } => match command {
@@ -185,13 +201,15 @@ fn run() -> Result<()> {
                 group,
                 dim,
                 rgb,
-            } => cmd_preset_save(&name, &group, dim, rgb, false),
+                mirek,
+            } => cmd_preset_save(&name, &group, dim, rgb, mirek, false),
             PresetCommands::Add {
                 name,
                 group,
                 dim,
                 rgb,
-            } => cmd_preset_save(&name, &group, dim, rgb, true),
+                mirek,
+            } => cmd_preset_save(&name, &group, dim, rgb, mirek, true),
             PresetCommands::Apply { name } => cmd_preset_apply(&name),
             PresetCommands::List => cmd_preset_list(),
             PresetCommands::Show { name } => cmd_preset_show(&name),
@@ -315,15 +333,25 @@ fn cmd_off(group: &str) -> Result<()> {
     Ok(())
 }
 
+fn cmd_warm(group: &str, mirek: u16) -> Result<()> {
+    let config = Config::load()?;
+    let client = make_client(&config)?;
+    let id = client.find_group_id(group)?;
+    client.set_group_color_temp(&id, mirek)?;
+    println!("Set color temperature of '{group}' to {mirek} mirek.");
+    Ok(())
+}
+
 fn cmd_preset_save(
     name: &str,
     group: &str,
     dim: Option<u8>,
     rgb: Option<Rgb>,
+    mirek: Option<u16>,
     append: bool,
 ) -> Result<()> {
-    if dim.is_none() && rgb.is_none() {
-        return Err(anyhow!("Specify at least --dim or --rgb"));
+    if dim.is_none() && rgb.is_none() && mirek.is_none() {
+        return Err(anyhow!("Specify at least one of --dim, --rgb, or --mirek"));
     }
 
     let mut config = Config::load()?;
@@ -331,6 +359,7 @@ fn cmd_preset_save(
         group: group.to_string(),
         dim,
         rgb: rgb.map(|Rgb(r, g, b)| [r, g, b]),
+        mirek,
     };
 
     if append {
@@ -371,6 +400,9 @@ fn cmd_preset_apply(name: &str) -> Result<()> {
         if let Some([r, g, b]) = action.rgb {
             client.set_group_color(&id, r, g, b)?;
         }
+        if let Some(mirek) = action.mirek {
+            client.set_group_color_temp(&id, mirek)?;
+        }
         println!("Applied to '{}'.", action.group);
     }
 
@@ -409,6 +441,9 @@ fn cmd_preset_show(name: &str) -> Result<()> {
         }
         if let Some([r, g, b]) = action.rgb {
             print!("  rgb: ({r}, {g}, {b})");
+        }
+        if let Some(mirek) = action.mirek {
+            print!("  mirek: {mirek}");
         }
         println!();
     }

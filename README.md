@@ -64,6 +64,23 @@ hue rgb "living room" 255 255 255  # white
 
 Values are standard RGB, 0–255 per channel. The tool converts to the CIE xy color space the Hue API requires.
 
+### Color temperature
+
+```sh
+hue warm "living room" 370   # warm white
+hue warm "living room" 153   # cool daylight
+hue warm "living room" 500   # candlelight
+```
+
+Sets the color temperature in mirek (153–500). Use this instead of `rgb` when you want white light — it drives the bulb's dedicated white LED element, which produces better results than an RGB approximation.
+
+| Feel | Mirek |
+|------|-------|
+| Daylight | 153 |
+| Neutral white | 250 |
+| Warm white | 370 |
+| Candlelight | 500 |
+
 ### On / Off
 
 ```sh
@@ -81,12 +98,13 @@ Presets let you save a named lighting configuration and apply it with a single c
 hue preset save partymode --group "living room" --dim 60 --rgb 255,0,128
 ```
 
-Both `--dim` and `--rgb` are optional, but at least one must be provided.
+At least one of `--dim`, `--rgb`, or `--mirek` must be provided.
 
 **Add more rooms to an existing preset:**
 
 ```sh
 hue preset add partymode --group "kitchen" --dim 40 --rgb 200,0,100
+hue preset add evening    --group "bedroom" --dim 30 --mirek 400
 ```
 
 **Apply a preset:**
